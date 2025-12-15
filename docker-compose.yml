@@ -47,7 +47,7 @@ services:
             - "8443:8443"
             - "9990:9990"
             - "9993:9993"
-            - "11112:11112"
+            - "11113:11112"
             - "2762:2762"
             - "2575:2575"
             - "12575:12575"
@@ -81,19 +81,39 @@ services:
         restart: always
         networks:
             - pacs-dcm4chee
+            
+    dicom:
+      image: registry.dto.kemkes.go.id/pub/dicom-router:latest
+      container_name: dicom-router
+      restart: always
+      ports:
+        - "11112:11112"
+        - "8080:8080"
+      environment:
+        - AE_TITLE=DCMROUTER  
+        - ORG_ID=100025504
+        - CLIENT=BCImTBSSvcc7R7pqERwqd5V3ZAEMcmnuhMAlsSfrpljcGIyI
+        - SECRET=NT57LNr6KCHz5RqKYtxQVmV9BgA7XDRRIqpt39ysefo1HjAXY4KAbYIrDdegnauB
+        # - WEBHOOK_URL=https://api-satusehat.kemkes.go.id
+        # - WEBHOOK_USER=<replace with values>
+        # - WEBHOOK_PASSWORD=<replace with values>
+        - URL=https://api-satusehat-stg.dto.kemkes.go.id
+      networks:
+        - pacs-dcm4chee
 
-    orthanc_router:
-        image: jodogne/orthanc-plugins:latest
-        container_name: orthanc-router
-        ports:
-            - "8042:8042" # Web UI Orthanc
-            - "4242:4242" # DICOM C-STORE listener
-        volumes:
-            - ./orthanc/orthanc.json:/etc/orthanc/orthanc.json:ro
-            - ./orthanc/routing.lua:/etc/orthanc/routing.lua:ro
-        networks:
-            - pacs-dcm4chee
-        restart: unless-stopped
+    # orthanc_router:
+    #     image: jodogne/orthanc-plugins:latest
+    #     container_name: orthanc-router
+    #     ports:
+    #         - "8042:8042" # Web UI Orthanc
+    #         - "4242:4242" # DICOM C-STORE listener
+    #     volumes:
+    #         - ./orthanc/orthanc.json:/etc/orthanc/orthanc.json:ro
+    #         - ./orthanc/routing.lua:/etc/orthanc/routing.lua:ro
+    #     networks:
+    #         - pacs-dcm4chee
+    #     restart: unless-stopped
+
 
 networks:
     pacs-dcm4chee:
