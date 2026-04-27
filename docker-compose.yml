@@ -1,120 +1,124 @@
 services:
-    ldap:
-        image: dcm4che/slapd-dcm4chee:2.6.8-34.1
-        container_name: ldap
-        logging:
-            driver: json-file
-            options:
-                max-size: "10m"
-        ports:
-            - "389:389"
-        environment:
-            STORAGE_DIR: /storage/fs1
-        volumes:
-            - /var/local/dcm4chee-arc/ldap:/var/lib/openldap/openldap-data
-            - /var/local/dcm4chee-arc/slapd.d:/etc/openldap/slapd.d
-        networks:
-            - pacs-dcm4chee
-    db:
-        image: dcm4che/postgres-dcm4chee:16.2-32
-        container_name: db
-        logging:
-            driver: json-file
-            options:
-                max-size: "10m"
-        ports:
-            - "5432:5432"
-        environment:
-            POSTGRES_DB: pacsdb
-            POSTGRES_USER: pacs
-            POSTGRES_PASSWORD: pacs
-            ARCHIVE_DB_MIGRATION: "true"
-        volumes:
-            - /etc/localtime:/etc/localtime:ro
-            - /etc/timezone:/etc/timezone:ro
-            - /var/local/dcm4chee-arc/db:/var/lib/postgresql/data
-        networks:
-            - pacs-dcm4chee
-    arc:
-        image: dcm4che/dcm4chee-arc-psql:5.32.0
-        container_name: arc
-        logging:
-            driver: json-file
-            options:
-                max-size: "10m"
-        ports:
-            - "8081:8080"
-            - "8443:8443"
-            - "9990:9990"
-            - "9993:9993"
-            - "11113:11112"
-            - "2762:2762"
-            - "2575:2575"
-            - "12575:12575"
-        environment:
-            POSTGRES_DB: pacsdb
-            POSTGRES_USER: pacs
-            POSTGRES_PASSWORD: pacs
-            WILDFLY_CHOWN: /storage
-            WILDFLY_WAIT_FOR: ldap:389 db:5432
-            # MIGRATION_ONLY: "true"
-            STORAGE_VERIFY_STUDY: "true"
-        depends_on:
-            - ldap
-            - db
-        volumes:
-            - /etc/localtime:/etc/localtime:ro
-            - /etc/timezone:/etc/timezone:ro
-            - /var/local/dcm4chee-arc/wildfly:/opt/wildfly/standalone
-            - /var/local/dcm4chee-arc/storage:/storage
-        networks:
-            - pacs-dcm4chee
+  ldap:
+    image: dcm4che/slapd-dcm4chee:2.6.8-34.1
+    container_name: ldap
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+    ports:
+      - "389:389"
+    environment:
+      STORAGE_DIR: /storage/fs1
+    volumes:
+      # - /var/local/dcm4chee-arc/ldap:/var/lib/openldap/openldap-data
+      # - /var/local/dcm4chee-arc/slapd.d:/etc/openldap/slapd.d
+      - /mnt/storage/docker-data/ldap-data:/var/lib/openldap/openldap-data
+      - /mnt/storage/docker-data/ldap-config:/etc/openldap/slapd.d
+    networks:
+      - pacs-dcm4chee
+  db:
+    image: dcm4che/postgres-dcm4chee:16.2-32
+    container_name: db
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: pacsdb
+      POSTGRES_USER: pacs
+      POSTGRES_PASSWORD: pacs
+      ARCHIVE_DB_MIGRATION: "true"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      # - /var/local/dcm4chee-arc/db:/var/lib/postgresql/data
+      - /mnt/storage/docker-data/postgres-data:/var/lib/postgresql/data
+    networks:
+      - pacs-dcm4chee
+  arc:
+    image: dcm4che/dcm4chee-arc-psql:5.32.0
+    container_name: arc
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+    ports:
+      - "8081:8080"
+      - "8443:8443"
+      - "9990:9990"
+      - "9993:9993"
+      - "11113:11112"
+      - "2762:2762"
+      - "2575:2575"
+      - "12575:12575"
+    environment:
+      POSTGRES_DB: pacsdb
+      POSTGRES_USER: pacs
+      POSTGRES_PASSWORD: pacs
+      WILDFLY_CHOWN: /storage
+      WILDFLY_WAIT_FOR: ldap:389 db:5432
+      # MIGRATION_ONLY: "true"
+      STORAGE_VERIFY_STUDY: "true"
+    depends_on:
+      - ldap
+      - db
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      # - /var/local/dcm4chee-arc/wildfly:/opt/wildfly/standalone
+      # - /var/local/dcm4chee-arc/storage:/storage
+      - /mnt/storage/docker-data/wildfly-data:/opt/wildfly/standalone
+      - /mnt/storage/docker-data/pacs-storage:/storage
+    networks:
+      - pacs-dcm4chee
 
-    ohif_viewer:
-        container_name: ohif
-        image: ohif/app:v3.9.2
-        ports:
-            - "3000:80"
-        volumes:
-            - ./nginx_ohif.conf:/etc/nginx/conf.d/default.conf:ro
-            - ./ohif.js:/usr/share/nginx/html/app-config.js:ro
-        restart: always
-        networks:
-            - pacs-dcm4chee
-            
-    dicom:
-      image: registry.dto.kemkes.go.id/pub/dicom-router:latest
-      container_name: dicom-router
-      restart: always
-      ports:
-        - "11112:11112"
-        - "8080:8080"
-      environment:
-        - AE_TITLE=DCMROUTER  
-        - ORG_ID=100025504
-        - CLIENT=BCImTBSSvcc7R7pqERwqd5V3ZAEMcmnuhMAlsSfrpljcGIyI
-        - SECRET=NT57LNr6KCHz5RqKYtxQVmV9BgA7XDRRIqpt39ysefo1HjAXY4KAbYIrDdegnauB
-        # - WEBHOOK_URL=https://api-satusehat.kemkes.go.id
-        # - WEBHOOK_USER=<replace with values>
-        # - WEBHOOK_PASSWORD=<replace with values>
-        - URL=https://api-satusehat-stg.dto.kemkes.go.id
-      networks:
-        - pacs-dcm4chee
+  ohif_viewer:
+    container_name: ohif
+    image: ohif/app:v3.9.2
+    ports:
+      - "3000:80"
+    volumes:
+      - ./nginx_ohif.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./ohif.js:/usr/share/nginx/html/app-config.js:ro
+    restart: always
+    networks:
+      - pacs-dcm4chee
 
-    # orthanc_router:
-    #     image: jodogne/orthanc-plugins:latest
-    #     container_name: orthanc-router
-    #     ports:
-    #         - "8042:8042" # Web UI Orthanc
-    #         - "4242:4242" # DICOM C-STORE listener
-    #     volumes:
-    #         - ./orthanc/orthanc.json:/etc/orthanc/orthanc.json:ro
-    #         - ./orthanc/routing.lua:/etc/orthanc/routing.lua:ro
-    #     networks:
-    #         - pacs-dcm4chee
-    #     restart: unless-stopped
+  dicom:
+    image: registry.dto.kemkes.go.id/pub/dicom-router:latest
+    container_name: dicom-router
+    restart: always
+    ports:
+      - "11112:11112"
+      - "8080:8080"
+    environment:
+      - AE_TITLE=DCMROUTER
+      - ORG_ID=100025504
+      - CLIENT=BCImTBSSvcc7R7pqERwqd5V3ZAEMcmnuhMAlsSfrpljcGIyI
+      - SECRET=NT57LNr6KCHz5RqKYtxQVmV9BgA7XDRRIqpt39ysefo1HjAXY4KAbYIrDdegnauB
+      # - WEBHOOK_URL=https://api-satusehat.kemkes.go.id
+      # - WEBHOOK_USER=<replace with values>
+      # - WEBHOOK_PASSWORD=<replace with values>
+      - URL=https://api-satusehat-stg.dto.kemkes.go.id
+    networks:
+      - pacs-dcm4chee
 
+  # orthanc_router:
+  #     image: jodogne/orthanc-plugins:latest
+  #     container_name: orthanc-router
+  #     ports:
+  #         - "8042:8042" # Web UI Orthanc
+  #         - "4242:4242" # DICOM C-STORE listener
+  #     volumes:
+  #         - ./orthanc/orthanc.json:/etc/orthanc/orthanc.json:ro
+  #         - ./orthanc/routing.lua:/etc/orthanc/routing.lua:ro
+  #     networks:
+  #         - pacs-dcm4chee
+  #     restart: unless-stopped
 
 networks:
-    pacs-dcm4chee:
-        driver: bridge
+  pacs-dcm4chee:
+    driver: bridge
