@@ -100,14 +100,11 @@ services:
 
     environment:
       TZ: Asia/Jakarta
-      URL: ""
+      URL: "https://api-satusehat-stg.dto.kemkes.go.id"
       AE_TITLE: "DCMROUTER"
       ORG_ID: "100025504"
       CLIENT: "BCImTBSSvcc7R7pqERwqd5V3ZAEMcmnuhMAlsSfrpljcGIyI"
       SECRET: "NT57LNr6KCHz5RqKYtxQVmV9BgA7XDRRIqpt39ysefo1HjAXY4KAbYIrDdegnauB"
-      WEBHOOK_URL: ""
-      WEBHOOK_USER: ""
-      WEBHOOK_PASSWORD: ""
       
     volumes:
       - ./router.conf:/app/router.conf
