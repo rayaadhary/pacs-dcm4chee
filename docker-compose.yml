@@ -89,21 +89,33 @@ services:
 
   dicom-router:
     container_name: dicom-router-17apr2026
+
     image: registry.dto.kemkes.go.id/pub/dicom-router:latest
     platform: linux/amd64
     restart: unless-stopped
+
     ports:
       - "11112:11112"
       - "8080:8080"
+
     environment:
       TZ: Asia/Jakarta
-      URL: "https://api-satusehat-stg.dto.kemkes.go.id"
-      ORG_ID: "262100fb-b21b-49f9-b6ea-643214681f79"
-      CLIENT: "Zf43GJg7nX5hNcK0m12hulmgisAQoQQymdz1LSxBooYiBKbC"
-      SECRET: "VrrPp92nKaBy406USKZE6vHBM9tRaUQduDB4AzuQIFXciVIWajXyKrFSpQuGmRC3"
+
+      # Variabel di bawah ini hanya dipakai jika router.conf masih memakai placeholder
+      # seperti $URL, $AE_TITLE, $ORG_ID, dll.
+      # Jika router.conf sudah final, nilai kosong ini aman diabaikan.
+      URL: ""
       AE_TITLE: "DCMROUTER"
+      ORG_ID: "100025504"
+      CLIENT: "BCImTBSSvcc7R7pqERwqd5V3ZAEMcmnuhMAlsSfrpljcGIyI"
+      SECRET: "NT57LNr6KCHz5RqKYtxQVmV9BgA7XDRRIqpt39ysefo1HjAXY4KAbYIrDdegnauB"
+      WEBHOOK_URL: ""
+      WEBHOOK_USER: ""
+      WEBHOOK_PASSWORD: ""
+
     volumes:
       - ./router.conf:/app/router.conf
+      - ./in:/app/in
     networks:
       - pacs-dcm4chee
 
