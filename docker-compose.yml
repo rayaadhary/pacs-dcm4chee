@@ -93,6 +93,9 @@ services:
     image: registry.dto.kemkes.go.id/pub/dicom-router:latest
     platform: linux/amd64
     restart: unless-stopped
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
 
     ports:
       - "11112:11112"
@@ -104,7 +107,7 @@ services:
       # Variabel di bawah ini hanya dipakai jika router.conf masih memakai placeholder
       # seperti $URL, $AE_TITLE, $ORG_ID, dll.
       # Jika router.conf sudah final, nilai kosong ini aman diabaikan.
-      URL: ""
+      URL: "https://api-satusehat-stg.dto.kemkes.go.id"
       AE_TITLE: "DCMROUTER"
       ORG_ID: "100025504"
       CLIENT: "BCImTBSSvcc7R7pqERwqd5V3ZAEMcmnuhMAlsSfrpljcGIyI"
@@ -115,7 +118,6 @@ services:
 
     volumes:
       - ./router.conf:/app/router.conf
-      - ./in:/app/in
     networks:
       - pacs-dcm4chee
 
@@ -137,7 +139,6 @@ services:
   #     - URL=https://api-satusehat-stg.dto.kemkes.go.id
   #   networks:
   #     - pacs-dcm4chee
-
 
   # orthanc_router:
   #     image: jodogne/orthanc-plugins:latest
